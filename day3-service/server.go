@@ -31,36 +31,34 @@ type Server struct {
 
 // day3 add start
 
-//Register publishes in the server the set of methods of the
+// Register publishes in the server the set of methods of the
 func (server *Server) Register(rcvr interface{}) error {
 	s := newService(rcvr)
 	if _, dup := server.serviceMap.LoadOrStore(s.name, s); dup {
-		return errors.New("rpc: service already defined:" + s.name)
+		return errors.New("rpc: service already defined: " + s.name)
 	}
 	return nil
 }
 
-//Register publishes the receiver's methods in the DefaultServer.
-func Register(rcvr interface{}) error {
-	return DefaultServer.Register(rcvr)
-}
+// Register publishes the receiver's methods in the DefaultServer.
+func Register(rcvr interface{}) error { return DefaultServer.Register(rcvr) }
 
 func (server *Server) findService(serviceMethod string) (svc *service, mtype *methodType, err error) {
 	dot := strings.LastIndex(serviceMethod, ".")
 	if dot < 0 {
-		err = errors.New("RPC service:service/method requestt ill-formed:" + serviceMethod)
+		err = errors.New("rpc server: service/method request ill-formed: " + serviceMethod)
 		return
 	}
 	serviceName, methodName := serviceMethod[:dot], serviceMethod[dot+1:]
 	svci, ok := server.serviceMap.Load(serviceName)
 	if !ok {
-		err = errors.New("rpc server:can't find service" + serviceName)
+		err = errors.New("rpc server: can't find service " + serviceName)
 		return
 	}
 	svc = svci.(*service)
 	mtype = svc.method[methodName]
 	if mtype == nil {
-		err = errors.New("rpc server:can't find method" + methodName)
+		err = errors.New("rpc server: can't find method " + methodName)
 	}
 	return
 }
@@ -164,10 +162,11 @@ func (server *Server) readRequest(cc codec.Codec) (*request, error) {
 		return nil, err
 	}
 	req := &request{h: h}
-	// todo:now we dont't know the type of request argv
+
 	//day3 add
+	req.svc, req.mtype, err = server.findService(h.ServiceMethod)
 	req.argv = req.mtype.newArgv()
-	req.replyv = req.mtype.newReply()
+	req.replyv = req.mtype.newReplyv()
 	// make sure that argvi is a pointer,ReadBody need a pointer as parameter
 	argvi := req.argv.Interface()
 	if req.argv.Type().Kind() != reflect.Ptr {
@@ -177,6 +176,7 @@ func (server *Server) readRequest(cc codec.Codec) (*request, error) {
 		log.Println("rpc server:read body err:", err)
 		return req, err
 	}
+	// todo:now we dont't know the type of request argv
 	// day 1,just suppose it's string
 	//req.argv = reflect.New(reflect.TypeOf(""))
 	//if err = cc.ReadBody(req.argv.Interface()); err != nil {
