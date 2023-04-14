@@ -167,8 +167,8 @@ func parseOptions(opts ...*Option) (*Option, error) {
 	return opt, nil
 }
 
-//Dail connects to an RPC server at the specified network address
-func Dail(network, address string, opts ...*Option) (client *Client, err error) {
+//Dial connects to an RPC server at the specified network address
+func Dial(network, address string, opts ...*Option) (client *Client, err error) {
 	//opt, err := parseOptions(opts...)
 	//if err != nil {
 	//	return nil, err
@@ -234,16 +234,14 @@ func (client *Client) Go(serviceMethod string, args, reply interface{}, done cha
 	return call
 }
 
-// Call invokes the named function,waits for it to complete
-// and returns its error status
+// Call invokes the named function, waits for it to complete,
+// and returns its error status.
 func (client *Client) Call(ctx context.Context, serviceMethod string, args, reply interface{}) error {
-	//call := <-client.Go(serviceMethod, args, reply, make(chan *Call, 1)).Done
-	//return call.Error
-	call := <-client.Go(serviceMethod, args, reply, make(chan *Call, 1)).Done
+	call := client.Go(serviceMethod, args, reply, make(chan *Call, 1))
 	select {
 	case <-ctx.Done():
 		client.removeCall(call.Seq)
-		return errors.New("RPC client call failed:" + ctx.Err().Error())
+		return errors.New("rpc client: call failed: " + ctx.Err().Error())
 	case call := <-call.Done:
 		return call.Error
 	}
@@ -254,6 +252,7 @@ type clientResult struct {
 	client *Client
 	err    error
 }
+
 type newClientFunc func(conn net.Conn, opt *Option) (client *Client, err error)
 
 func dialTimeout(f newClientFunc, network, address string, opts ...*Option) (client *Client, err error) {
@@ -282,7 +281,7 @@ func dialTimeout(f newClientFunc, network, address string, opts ...*Option) (cli
 	}
 	select {
 	case <-time.After(opt.ConnectTimeout):
-		return nil, fmt.Errorf("rpc client:connect timeout:expect within %s", opt.ConnectTimeout)
+		return nil, fmt.Errorf("rpc client: connect timeout: expect within %s", opt.ConnectTimeout)
 	case result := <-ch:
 		return result.client, result.err
 	}

@@ -214,7 +214,6 @@ func (server *Server) handleRequest(cc codec.Codec, req *request, sending *sync.
 	//	return
 	//}
 	//server.sendResponse(cc, req.h, req.replyv.Interface(), sending)
-	// day4
 	defer wg.Done()
 	called := make(chan struct{})
 	sent := make(chan struct{})
@@ -224,11 +223,13 @@ func (server *Server) handleRequest(cc codec.Codec, req *request, sending *sync.
 		if err != nil {
 			req.h.Error = err.Error()
 			server.sendResponse(cc, req.h, invalidRequest, sending)
+			sent <- struct{}{}
 			return
 		}
 		server.sendResponse(cc, req.h, req.replyv.Interface(), sending)
 		sent <- struct{}{}
 	}()
+
 	if timeout == 0 {
 		<-called
 		<-sent
@@ -236,10 +237,9 @@ func (server *Server) handleRequest(cc codec.Codec, req *request, sending *sync.
 	}
 	select {
 	case <-time.After(timeout):
-		req.h.Error = fmt.Sprintf("rpc server:request handle timeout:expect within %s", timeout)
+		req.h.Error = fmt.Sprintf("rpc server: request handle timeout: expect within %s", timeout)
 		server.sendResponse(cc, req.h, invalidRequest, sending)
 	case <-called:
 		<-sent
-
 	}
 }
