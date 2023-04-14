@@ -136,7 +136,7 @@ func (server *Server) serveCodec(cc codec.Codec) {
 			continue
 		}
 		wg.Add(1)
-		go server.handleRequest(cc, req, sending, wg)
+		go server.handleRequest(cc, req, sending, wg, 10)
 	}
 	wg.Wait()
 	_ = cc.Close()
