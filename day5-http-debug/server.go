@@ -260,20 +260,23 @@ func (server *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 	conn, _, err := w.(http.Hijacker).Hijack()
 	if err != nil {
-		log.Print("rpc hijacking", req.RemoteAddr, ":", err.Error())
+		log.Print("rpc hijacking ", req.RemoteAddr, ": ", err.Error())
 		return
 	}
-	_, _ = io.WriteString(conn, "HTTP/1.0"+connected+"\n\n")
+	// http/1.0的时候，字符串拼接的时候一定呀有空格
+	_, _ = io.WriteString(conn, "HTTP/1.0 "+connected+"\n\n")
 	server.ServeConn(conn)
+
 }
 
 //HandleHTTP register an HTTP handler for rpc messages on rpcPath
 // It is still necessary to invoke http.Serve(),typically in a go statement
+
 func (server *Server) HandleHTTP() {
 	http.Handle(defaultRPCPath, server)
+	http.Handle(defaultDebugPath, debugHTTP{server})
+	log.Println("rpc server debug path:", defaultDebugPath)
 }
-
-// HandleHTTP is a convenient approach for default server to register http handlers
 func HandleHTTP() {
 	DefaultServer.HandleHTTP()
 }
