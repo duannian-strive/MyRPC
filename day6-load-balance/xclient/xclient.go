@@ -60,6 +60,17 @@ func (xc *XClient) call(rpcAddr string, ctx context.Context, serviceMethod strin
 	return client.Call(ctx, serviceMethod, args, reply)
 }
 
+// Call invokes the name function,waits for it to complete,
+// and returns its error status
+// xc will chose a proper server.
+func (xc *XClient) Call(ctx context.Context, serviceMethod string, args, reply interface{}) error {
+	rpcAddr, err := xc.d.Get(xc.mode)
+	if err != nil {
+		return err
+	}
+	return xc.call(rpcAddr, ctx, serviceMethod, args, reply)
+}
+
 //Broadcast invokes the named function for every server registered in discovery
 func (xc *XClient) Broadcast(ctx context.Context, serviceMethod string, args, reply interface{}) error {
 	servers, err := xc.d.GetAll()
