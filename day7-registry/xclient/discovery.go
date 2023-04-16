@@ -25,7 +25,7 @@ type Discovery interface {
 //MultiServerDiscovery is a discovery for multi servers without a registry center
 // user provides the server addresses explicitly instead
 
-type MultiServerDiscovery struct {
+type MultiServersDiscovery struct {
 	r       *rand.Rand   // generate random number
 	mu      sync.RWMutex // protect following
 	servers []string
@@ -34,8 +34,8 @@ type MultiServerDiscovery struct {
 
 // NewMultiServerDiscovery creates a MultiServerDiscovery instance
 
-func NewMultiServerDiscovery(servers []string) *MultiServerDiscovery {
-	d := &MultiServerDiscovery{
+func NewMultiServersDiscovery(servers []string) *MultiServersDiscovery {
+	d := &MultiServersDiscovery{
 		servers: servers,
 		r:       rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
@@ -43,15 +43,15 @@ func NewMultiServerDiscovery(servers []string) *MultiServerDiscovery {
 	return d
 }
 
-var _Discovery = (*MultiServerDiscovery)(nil)
+var _Discovery = (*MultiServersDiscovery)(nil)
 
 // Refresh doesn't make sense for MultiServersDiscovery , so ignore it
-func (d *MultiServerDiscovery) Refresh() error {
+func (d *MultiServersDiscovery) Refresh() error {
 	return nil
 }
 
 // Update the servers of discovery dynamically if needed
-func (d *MultiServerDiscovery) Update(servers []string) error {
+func (d *MultiServersDiscovery) Update(servers []string) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	d.servers = servers
@@ -59,7 +59,7 @@ func (d *MultiServerDiscovery) Update(servers []string) error {
 }
 
 // Get a server according to mode
-func (d *MultiServerDiscovery) Get(mode SelectMode) (string, error) {
+func (d *MultiServersDiscovery) Get(mode SelectMode) (string, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	n := len(d.servers)
@@ -80,7 +80,7 @@ func (d *MultiServerDiscovery) Get(mode SelectMode) (string, error) {
 
 // returns all servers in discovery
 
-func (d *MultiServerDiscovery) GetAll() ([]string, error) {
+func (d *MultiServersDiscovery) GetAll() ([]string, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 	// return a copy of d.servers
