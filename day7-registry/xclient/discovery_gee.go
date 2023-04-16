@@ -27,7 +27,6 @@ func NewGeeRegistryDiscovery(registerAddr string, timeout time.Duration) *GeeReg
 	}
 	return d
 }
-
 func (d *GeeRegistryDiscovery) Update(servers []string) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -42,7 +41,7 @@ func (d *GeeRegistryDiscovery) Refresh() error {
 	if d.lastUpdate.Add(d.timeout).After(time.Now()) {
 		return nil
 	}
-	log.Println("rpc register:refresh servers form registry", d.registry)
+	log.Println("rpc registry: refresh servers from registry", d.registry)
 	resp, err := http.Get(d.registry)
 	if err != nil {
 		log.Println("rpc registry refresh err:", err)
@@ -58,13 +57,13 @@ func (d *GeeRegistryDiscovery) Refresh() error {
 	d.lastUpdate = time.Now()
 	return nil
 }
-
 func (d *GeeRegistryDiscovery) Get(mode SelectMode) (string, error) {
 	if err := d.Refresh(); err != nil {
 		return "", err
 	}
 	return d.MultiServersDiscovery.Get(mode)
 }
+
 func (d *GeeRegistryDiscovery) GetAll() ([]string, error) {
 	if err := d.Refresh(); err != nil {
 		return nil, err
