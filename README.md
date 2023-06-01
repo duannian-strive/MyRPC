@@ -1,2 +1,3 @@
 # MyRPC
-duanniannian
+A simple rpc is written go
+
